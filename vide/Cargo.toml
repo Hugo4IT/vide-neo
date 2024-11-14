@@ -1,0 +1,12 @@
+[package]
+name = "vide"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vide_animate = { path = "../vide_animate" }
+vide_audio = { path = "../vide_audio" }
+vide_common = { path = "../vide_common" }
+vide_project = { path = "../vide_project" }
+vide_render = { path = "../vide_render" }
+vide_video = { path = "../vide_video" }

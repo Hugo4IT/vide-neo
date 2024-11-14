@@ -1,0 +1,11 @@
+[package]
+name = "vide_render"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vide_common = { path = "../vide_common" }
+vide_project = { path = "../vide_project" }
+pollster = "0.4.0"
+euler = "0.4.1"
+wgpu = "23.0.0"

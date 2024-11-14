@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "vide",
+    "vide_animate",
+    "vide_audio", "vide_common",
+    "vide_project",
+    "vide_render",
+    "vide_video",
+]
+resolver = "2"
