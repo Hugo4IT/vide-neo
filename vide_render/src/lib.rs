@@ -73,7 +73,7 @@ fn render_clip(
     if let Some(video) = clip.video_mut() {
         video.set_transform(absolute_transform);
         video.update(wgpu, &frame_info, &local_frame_info);
-        video.render(wgpu, &frame_info, &local_frame_info, encoder, destination)
+        // video.render(wgpu, &frame_info, &local_frame_info, encoder, destination)
     }
 }
 
