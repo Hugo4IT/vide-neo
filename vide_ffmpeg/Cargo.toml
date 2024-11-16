@@ -1,12 +1,11 @@
 [package]
-name = "vide_video"
+name = "vide_ffmpeg"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-vide_animate = { path = "../vide_animate" }
 vide_common = { path = "../vide_common" }
 vide_render = { path = "../vide_render" }
-bytemuck = "1.19.0"
-euler = "0.4.1"
+ac-ffmpeg = "0.18.1"
 wgpu = "23.0.0"
+log = "0.4.22"

@@ -73,9 +73,9 @@ impl Blend {
             min_filter: wgpu::FilterMode::Linear,
             mipmap_filter: wgpu::FilterMode::Linear,
             lod_min_clamp: 0.0,
-            lod_max_clamp: 1.0,
+            lod_max_clamp: 32.0,
             compare: None,
-            anisotropy_clamp: 16,
+            anisotropy_clamp: 1,
             border_color: Some(wgpu::SamplerBorderColor::TransparentBlack),
         });
 
@@ -192,6 +192,8 @@ pub struct BlendModes {
 
 impl BlendModes {
     pub fn load(wgpu: &Wgpu, target: wgpu::TextureFormat) -> Self {
+        log::info!("Loading blend modes for {target:?}");
+
         let normal = Blend::new(
             wgpu,
             target,

@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+bytemuck = "1.19.0"
 euler = "0.4.1"
 wgpu = "23.0.0"

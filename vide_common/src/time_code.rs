@@ -1,4 +1,7 @@
-use std::ops::{Add, Range, RangeFrom, RangeFull, RangeTo, Sub};
+use std::{
+    fmt::Display,
+    ops::{Add, Range, RangeFrom, RangeFull, RangeTo, Sub},
+};
 
 use crate::types::{Frames, FramesPerSecond, Seconds, TimeUnit};
 
@@ -53,6 +56,12 @@ impl Sub for TimeCode {
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self::new(self.value() - rhs.value())
+    }
+}
+
+impl Display for TimeCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value())
     }
 }
 
@@ -155,5 +164,18 @@ where
 {
     fn from(value: T) -> Self {
         Self::new(Some(TimeUnit::from(value).into()), None)
+    }
+}
+
+impl Display for UnboundedTimecodeRange {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}..{}",
+            self.start
+                .as_ref()
+                .map_or(String::new(), ToString::to_string),
+            self.end.as_ref().map_or(String::new(), ToString::to_string)
+        )
     }
 }

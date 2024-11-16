@@ -21,6 +21,7 @@ pub struct TextureFactory {
     slots: Vec<FactoryTexture>,
     descriptor: wgpu::TextureDescriptor<'static>,
     view_descriptor: wgpu::TextureViewDescriptor<'static>,
+    created_textures: usize,
 }
 
 impl TextureFactory {
@@ -32,10 +33,15 @@ impl TextureFactory {
             slots: Vec::new(),
             descriptor,
             view_descriptor,
+            created_textures: 0,
         }
     }
 
-    fn create_texture(&self, wgpu: &Wgpu) -> FactoryTexture {
+    fn create_texture(&mut self, wgpu: &Wgpu) -> FactoryTexture {
+        self.created_textures += 1;
+
+        log::info!("Creating texture #{}", self.created_textures);
+
         let texture = wgpu.device.create_texture(&self.descriptor);
         let view = texture.create_view(&self.view_descriptor);
 
@@ -52,5 +58,13 @@ impl TextureFactory {
 
     pub fn return_texture(&mut self, texture: FactoryTexture) {
         self.slots.push(texture);
+    }
+
+    pub fn created_textures(&self) -> usize {
+        self.created_textures
+    }
+
+    pub fn available_textures(&self) -> usize {
+        self.slots.len()
     }
 }
