@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+vide_animate = { path = "../vide_animate" }
+vide_common = { path = "../vide_common" }
+vide_render = { path = "../vide_render" }
+euler = "0.4.1"
+wgpu = "23.0.0"

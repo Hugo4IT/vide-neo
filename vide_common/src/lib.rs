@@ -2,6 +2,7 @@ use prelude::TimeCode;
 use time_code::UnboundedTimecodeRange;
 use types::{Resolution, TimeUnit};
 
+pub mod color;
 pub mod config;
 pub mod prelude;
 pub mod render;

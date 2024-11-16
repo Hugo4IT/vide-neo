@@ -12,7 +12,7 @@ pub mod ease;
 pub mod interpolate;
 pub mod prelude;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Keyframe<T: Interpolate + Debug + Clone> {
     easing: Option<Box<dyn EaseSampler>>,
     time_code: TimeCode,
@@ -32,7 +32,7 @@ impl<T: Interpolate + Debug + Clone> Keyframe<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AnimatedProperty<T: Interpolate + Debug + Clone> {
     default: T,
     keyframes: Vec<Keyframe<T>>,
@@ -125,7 +125,6 @@ impl<T: Interpolate + Debug + Clone> AnimatedPropertyBuilder<T> {
         mut self,
         at: KeyframeTiming<impl Into<TimeCode>>,
         value: impl Into<T>,
-        easing: Option<impl EaseSampler + 'static>,
     ) -> Self {
         let time_code = match at {
             KeyframeTiming::Abs(t) => t.into(),
@@ -146,10 +145,41 @@ impl<T: Interpolate + Debug + Clone> AnimatedPropertyBuilder<T> {
         } else {
             self.animation.push_keyframe(Keyframe {
                 // Does not work with regular map
-                easing: match easing {
-                    Some(easing) => Some(Box::new(easing)),
-                    None => None,
-                },
+                easing: None,
+                time_code,
+                value: value.into(),
+            });
+
+            self
+        }
+    }
+
+    pub fn keyframe_ease(
+        mut self,
+        at: KeyframeTiming<impl Into<TimeCode>>,
+        value: impl Into<T>,
+        easing: impl EaseSampler + 'static,
+    ) -> Self {
+        let time_code = match at {
+            KeyframeTiming::Abs(t) => t.into(),
+            KeyframeTiming::Rel(t) => {
+                self.animation
+                    .keyframes
+                    .last()
+                    .map(|k| k.time_code)
+                    .unwrap_or(TimeCode::new(0))
+                    + t.into()
+            }
+        };
+
+        if time_code.value() == 0 {
+            self.animation.default = value.into();
+
+            self
+        } else {
+            self.animation.push_keyframe(Keyframe {
+                // Does not work with regular map
+                easing: Some(Box::new(easing)),
                 time_code,
                 value: value.into(),
             });

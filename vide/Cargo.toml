@@ -10,3 +10,4 @@ vide_common = { path = "../vide_common" }
 vide_project = { path = "../vide_project" }
 vide_render = { path = "../vide_render" }
 vide_video = { path = "../vide_video" }
+euler = "0.4.1"

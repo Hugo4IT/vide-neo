@@ -1,5 +1,5 @@
 use euler::{DVec2, DVec3, DVec4, Quat, Vec2, Vec3, Vec4};
-use vide_common::transform::Transform;
+use vide_common::{color::Color, transform::Transform};
 
 pub trait Interpolate {
     fn interpolate(a: Self, b: Self, t: f64) -> Self;
@@ -149,5 +149,16 @@ impl Interpolate for Transform {
             a.rotation().interpolate_to(b.rotation(), t),
             a.scale().interpolate_to(b.scale(), t),
         )
+    }
+}
+
+impl Interpolate for Color {
+    fn interpolate(a: Self, b: Self, t: f64) -> Self {
+        Self {
+            r: f64::interpolate(a.r, b.r, t),
+            g: f64::interpolate(a.g, b.g, t),
+            b: f64::interpolate(a.b, b.b, t),
+            a: f64::interpolate(a.a, b.a, t),
+        }
     }
 }

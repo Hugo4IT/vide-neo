@@ -1,5 +1,6 @@
 pub mod prelude;
 
+pub use euler;
 pub use vide_animate as animate;
 pub use vide_audio as audio;
 pub use vide_common as common;
