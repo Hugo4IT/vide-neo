@@ -221,9 +221,11 @@ impl OutputHandler for MediaExporter {
         } = self.configured.as_mut().expect("Not configured yet");
 
         encoder.flush().unwrap();
+
         while let Some(packet) = encoder.take().unwrap() {
             muxer.push(packet.with_stream_index(0)).unwrap();
         }
+
         muxer.flush().unwrap();
     }
 }

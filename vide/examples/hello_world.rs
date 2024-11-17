@@ -21,7 +21,7 @@ fn main() {
             .build(),
         rotation: animated(0.0)
             .hold(Seconds(2.0))
-            .keyframe_ease(Rel(Seconds(2.0)), 360.0 * 3.0, EASE_OUT_EXPO)
+            .keyframe_ease(Rel(Seconds(2.0)), 360.0, EASE_OUT_EXPO)
             .build(),
         size: value(vec2!(100.0)),
         pivot: value(vec2!(0.0)),

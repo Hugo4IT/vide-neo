@@ -55,14 +55,13 @@ unsafe impl bytemuck::Zeroable for Vertex {}
 
 #[derive(Debug)]
 pub struct RectShapeRenderer {
-    shader_module: wgpu::ShaderModule,
     bind_group_layout: wgpu::BindGroupLayout,
     vertex_buffer: wgpu::Buffer,
     pipeline: wgpu::RenderPipeline,
 }
 
 impl RectShapeRenderer {
-    pub fn new(wgpu: &Wgpu, config: &RenderConfiguration) -> Self {
+    pub fn new(wgpu: &Wgpu, _config: &RenderConfiguration) -> Self {
         let shader_module = wgpu
             .device
             .create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -170,7 +169,6 @@ impl RectShapeRenderer {
             });
 
         Self {
-            shader_module,
             bind_group_layout,
             vertex_buffer,
             pipeline,
@@ -265,7 +263,7 @@ impl VisibleObject for RectShape {
     fn update(
         &mut self,
         wgpu: &Wgpu,
-        frame_info: &vide_common::FrameInfo,
+        _frame_info: &vide_common::FrameInfo,
         local_frame_info: &vide_common::FrameInfo,
     ) {
         let data = self.to_data(
@@ -286,8 +284,8 @@ impl VisibleObject for RectShape {
     fn render(
         &mut self,
         wgpu: &Wgpu,
-        frame_info: &vide_common::FrameInfo,
-        local_frame_info: &vide_common::FrameInfo,
+        _frame_info: &vide_common::FrameInfo,
+        _local_frame_info: &vide_common::FrameInfo,
         encoder: &mut wgpu::CommandEncoder,
         destination: &wgpu::TextureView,
     ) {
