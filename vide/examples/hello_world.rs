@@ -2,6 +2,7 @@ use std::path::Path;
 
 use euler::vec2;
 use vide::prelude::*;
+use vide_ffmpeg::MediaExporter;
 use vide_project::Project;
 #[allow(unused_imports)]
 use vide_render::export::{gif::GifExporter, images::ImageExporter};
@@ -41,7 +42,7 @@ fn main() {
             frames_per_second: FPS_60,
             hdr: false,
         },
-        GifExporter::new(Path::new("test-output/gif.gif")),
+        MediaExporter::new(Path::new("test-output/vide.mp4")),
         // ImageExporter::new(|frame| Path::new(&format!("test-output/{frame:04}.png")).to_path_buf()),
     );
 }

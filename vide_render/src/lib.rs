@@ -360,6 +360,8 @@ pub fn render(mut project: Project, config: RenderConfiguration, mut output: imp
         output.publish_frame(&wgpu, encoder, &handler_blended_texture, frame, frame_info);
     }
 
+    output.finish(&wgpu);
+
     handler_texture_factory.return_texture(handler_canvas_texture);
     handler_texture_factory.return_texture(handler_blended_texture);
 

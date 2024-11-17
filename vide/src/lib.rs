@@ -7,3 +7,6 @@ pub use vide_common as common;
 pub use vide_project as project;
 pub use vide_render as render;
 pub use vide_video as video;
+
+#[cfg(feature = "ffmpeg")]
+pub use vide_ffmpeg as ffmpeg;

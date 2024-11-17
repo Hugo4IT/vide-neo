@@ -1,10 +1,46 @@
 use std::{
+    fs::File,
+    io::Write,
     path::{Path, PathBuf},
     sync::mpsc::channel,
 };
 
-use vide_common::{config::RenderConfiguration, render::Wgpu, FrameInfo};
+use ac_ffmpeg::{
+    codec::{
+        video::{self, PixelFormat, VideoEncoder, VideoFrameMut},
+        Encoder,
+    },
+    format::{
+        io::IO,
+        muxer::{Muxer, OutputFormat},
+    },
+    time::{TimeBase, Timestamp},
+};
+use vide_common::{config::RenderConfiguration, prelude::TimeCode, render::Wgpu, FrameInfo};
 use vide_render::{interface::OutputHandler, texture_factory::FactoryTexture};
+
+fn open_output(
+    path: &str,
+    elementary_streams: &[ac_ffmpeg::codec::CodecParameters],
+) -> Result<Muxer<File>, ac_ffmpeg::Error> {
+    let output_format = OutputFormat::guess_from_file_name(path).ok_or_else(|| {
+        ac_ffmpeg::Error::new(format!("unable to guess output format for file: {}", path))
+    })?;
+
+    let output = File::create(path).map_err(|err| {
+        ac_ffmpeg::Error::new(format!("unable to create output file {}: {}", path, err))
+    })?;
+
+    let io = IO::from_seekable_write_stream(output);
+
+    let mut muxer_builder = Muxer::builder();
+
+    for codec_parameters in elementary_streams {
+        muxer_builder.add_stream(codec_parameters)?;
+    }
+
+    muxer_builder.build(io, output_format)
+}
 
 struct ConfiguredProperties {
     width: u32,
@@ -12,10 +48,14 @@ struct ConfiguredProperties {
     padded_bytes_per_row: u32,
     unpadded_bytes_per_row: u32,
     buffer: wgpu::Buffer,
+    pixel_format: PixelFormat,
+    encoder: VideoEncoder,
+    muxer: Muxer<File>,
 }
 
 pub struct MediaExporter {
     path: PathBuf,
+    time_base: TimeBase,
     configured: Option<ConfiguredProperties>,
 }
 
@@ -23,6 +63,7 @@ impl MediaExporter {
     pub fn new(path: impl AsRef<Path>) -> Self {
         Self {
             path: path.as_ref().into(),
+            time_base: TimeBase::new(1, TimeCode::time_base() as _),
             configured: None,
         }
     }
@@ -41,11 +82,25 @@ impl OutputHandler for MediaExporter {
 
         let buffer_size = (padded_bytes_per_row * height) as wgpu::BufferAddress;
         let buffer = wgpu.device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("GIF Output Buffer"),
+            label: Some("Media Output Buffer"),
             size: buffer_size,
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
             mapped_at_creation: false,
         });
+
+        let pixel_format = video::frame::get_pixel_format("rgb24");
+
+        let encoder = VideoEncoder::builder("libx264rgb")
+            .unwrap()
+            .pixel_format(pixel_format)
+            .time_base(self.time_base)
+            .width(width as _)
+            .height(height as _)
+            .build()
+            .unwrap();
+
+        let codec_parameters = encoder.codec_parameters().into();
+        let muxer = open_output(self.path.to_str().unwrap(), &[codec_parameters]).unwrap();
 
         self.configured = Some(ConfiguredProperties {
             width,
@@ -53,6 +108,9 @@ impl OutputHandler for MediaExporter {
             padded_bytes_per_row,
             unpadded_bytes_per_row,
             buffer,
+            pixel_format,
+            encoder,
+            muxer,
         });
 
         wgpu::TextureFormat::Rgba8UnormSrgb
@@ -61,9 +119,9 @@ impl OutputHandler for MediaExporter {
     fn publish_frame(
         &mut self,
         wgpu: &Wgpu,
-        mut encoder: wgpu::CommandEncoder,
+        mut command_encoder: wgpu::CommandEncoder,
         texture: &FactoryTexture,
-        frame: i64,
+        _frame: i64,
         frame_info: FrameInfo,
     ) {
         let ConfiguredProperties {
@@ -72,9 +130,12 @@ impl OutputHandler for MediaExporter {
             padded_bytes_per_row,
             unpadded_bytes_per_row,
             ref buffer,
+            pixel_format,
+            ref mut encoder,
+            ref mut muxer,
         } = self.configured.as_mut().expect("Not configured yet");
 
-        encoder.copy_texture_to_buffer(
+        command_encoder.copy_texture_to_buffer(
             wgpu::ImageCopyTexture {
                 texture: texture.texture(),
                 mip_level: 0,
@@ -96,7 +157,7 @@ impl OutputHandler for MediaExporter {
             },
         );
 
-        wgpu.queue.submit(std::iter::once(encoder.finish()));
+        wgpu.queue.submit(std::iter::once(command_encoder.finish()));
 
         log::trace!("Copying frame");
 
@@ -122,13 +183,47 @@ impl OutputHandler for MediaExporter {
                 drop(padded_data);
                 buffer.unmap();
 
+                let mapped_data = data
+                    .chunks(4)
+                    .flat_map(|c| &c[..3])
+                    .copied()
+                    .collect::<Vec<_>>();
+
                 log::info!("Encoding frame");
 
-                // image::save_buffer(path, &data, *width, *height, image::ColorType::Rgba8).unwrap();
+                let mut new_frame = VideoFrameMut::black(*pixel_format, *width as _, *height as _);
+
+                new_frame.planes_mut()[0]
+                    .data_mut()
+                    .write_all(&mapped_data)
+                    .unwrap();
+
+                let timestamp = Timestamp::new(frame_info.time_code.value(), self.time_base);
+                encoder
+                    .push(new_frame.with_pts(timestamp).freeze())
+                    .unwrap();
+
+                while let Some(packet) = encoder.take().unwrap() {
+                    muxer.push(packet.with_stream_index(0)).unwrap();
+                }
             }
             other => {
                 log::error!("{:?}", other);
             }
         }
+    }
+
+    fn finish(&mut self, _wgpu: &Wgpu) {
+        let ConfiguredProperties {
+            ref mut encoder,
+            ref mut muxer,
+            ..
+        } = self.configured.as_mut().expect("Not configured yet");
+
+        encoder.flush().unwrap();
+        while let Some(packet) = encoder.take().unwrap() {
+            muxer.push(packet.with_stream_index(0)).unwrap();
+        }
+        muxer.flush().unwrap();
     }
 }

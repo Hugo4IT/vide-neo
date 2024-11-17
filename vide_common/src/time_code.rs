@@ -31,6 +31,10 @@ impl TimeCode {
     pub const fn value(&self) -> i64 {
         self.value
     }
+
+    pub const fn time_base() -> i64 {
+        Self::SECOND
+    }
 }
 
 impl From<TimeUnit> for TimeCode {

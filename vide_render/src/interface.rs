@@ -12,4 +12,7 @@ pub trait OutputHandler {
         frame: i64,
         frame_info: FrameInfo,
     );
+    fn finish(&mut self, wgpu: &Wgpu) {
+        let _ = wgpu;
+    }
 }

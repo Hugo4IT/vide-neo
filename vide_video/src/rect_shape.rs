@@ -93,28 +93,28 @@ impl RectShapeRenderer {
                 contents: bytemuck::cast_slice(&[
                     // Face 1
                     Vertex {
-                        position: [0.0, 0.0],
+                        position: [-0.5, -0.5],
                         uv: [0.0, 1.0],
                     },
                     Vertex {
-                        position: [1.0, 0.0],
+                        position: [0.5, -0.5],
                         uv: [1.0, 1.0],
                     },
                     Vertex {
-                        position: [0.0, 1.0],
+                        position: [-0.5, 0.5],
                         uv: [0.0, 0.0],
                     },
                     // Face 2
                     Vertex {
-                        position: [0.0, 1.0],
+                        position: [-0.5, 0.5],
                         uv: [0.0, 0.0],
                     },
                     Vertex {
-                        position: [1.0, 0.0],
+                        position: [0.5, -0.5],
                         uv: [1.0, 1.0],
                     },
                     Vertex {
-                        position: [1.0, 1.0],
+                        position: [0.5, 0.5],
                         uv: [1.0, 0.0],
                     },
                 ]),
@@ -214,7 +214,10 @@ impl RectShape {
         let color = self.color.evaluate(time_code);
 
         let matrix = Trs::new(
-            vec3!(position - vec2!(size.x * pivot.x, size.y * pivot.y), 0.0),
+            vec3!(
+                position - vec2!(size.x * (pivot.x - 0.5), size.y * (pivot.y - 0.5)),
+                0.0
+            ),
             Quat::axis_angle(vec3!(0.0, 0.0, -1.0), rotation.to_radians() as f32),
             vec3!(size, 1.0),
         )
